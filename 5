@@ -1,0 +1,49 @@
+const jwt = require('jsonwebtoken');
+const { logError } = require('./helpers');
+
+/**
+ * Middleware to authenticate JWT tokens from the Authorization header.
+ * If the token is valid, it adds the user data from the token payload to the request object as req.user.
+ * If the token is invalid, expired, or not provided, responds with a 401 status and a JSON error message.
+ * If an unexpected error occurs during verification, responds with a 500 status and a JSON error message.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @param {Function} next - Express next middleware function.
+ */
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!authHeader) {
+    logError('No authorization header provided.');
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+    if (!authHeader.startsWith('Bearer ')) {
+      logError('Authorization header does not start with Bearer.');
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+  if (token == null) {
+    logError('No token provided.');
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+          if (err.name === 'TokenExpiredError') {
+               logError('Token expired.');
+        return res.status(401).json({ message: 'Unauthorized' });
+          }
+      logError(Token verification failed: ${err.message});
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    req.user = user;
+    next();
+  });
+};
+
+module.exports = {
+  authenticateToken,
+};
