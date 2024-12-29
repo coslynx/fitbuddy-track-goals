@@ -1,0 +1,70 @@
+// server/server.js
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const app = express();
+
+// Enable CORS
+app.use(cors());
+app.use(express.json());
+
+
+// Database connection
+const mongoUri = process.env.MONGO_URI;
+
+if (!mongoUri) {
+  console.error('MONGO_URI environment variable is not defined.');
+  process.exit(1);
+}
+
+
+mongoose.connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log('Connected to MongoDB');
+  })
+  .catch((err) => {
+    console.error('Error connecting to MongoDB:', err);
+    process.exit(1);
+  });
+
+
+// Basic route
+app.get('/', (req, res) => {
+  res.json({ message: 'Server is running!' });
+});
+
+
+// Import and use routes
+import routes from './routes/routes.js';
+if (routes) {
+    app.use('/api', routes);
+}else{
+    console.error("Could not find routes file server/routes/routes.js");
+    process.exit(1)
+}
+
+
+// Fallback port
+const port = process.env.PORT || 3000;
+
+// Start server
+const server = app.listen(port, () => {
+  console.log(Server is listening on port ${port});
+});
+
+server.on('error', (err) => {
+    console.error("Failed to start server", err);
+    process.exit(1)
+})
