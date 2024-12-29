@@ -1,0 +1,25 @@
+// server/utils/errorHandler.js
+
+const errorHandler = (error, req, res) => {
+  console.error("Error:", error);
+  console.error("Full Error Stack:", error.stack);
+
+  let statusCode = 500;
+  if (error && error.status) {
+    statusCode = error.status;
+  }
+
+  let errorMessage = "Internal Server Error";
+  if (error && error.message) {
+      errorMessage = error.message;
+  }
+
+  res.status(statusCode).json({
+    error: {
+      message: errorMessage,
+      status: statusCode,
+    },
+  });
+};
+
+module.exports = { errorHandler };
